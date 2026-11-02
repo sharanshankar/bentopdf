@@ -4,6 +4,7 @@ import { pdfSocket } from '../sockets';
 import type { SocketData } from '../types';
 import { requirePdfInput, processBatch } from '../types';
 import { loadPdfDocument } from '../../utils/load-pdf-document.js';
+import { stripOutsideCropContent } from '../../utils/crop-pdf.js';
 import { wfError } from '../errors';
 
 export class CropNode extends BaseWorkflowNode {
@@ -56,20 +57,22 @@ export class CropNode extends BaseWorkflowNode {
         const pages = pdfDoc.getPages();
 
         for (const page of pages) {
-          const { width, height } = page.getSize();
+          const { x, y, width, height } = page.getCropBox();
           const cropWidth = width - left - right;
           const cropHeight = height - top - bottom;
           if (cropWidth <= 0 || cropHeight <= 0) {
             throw new Error(wfError('cropMarginsExceed'));
           }
-          page.setCropBox(left, bottom, cropWidth, cropHeight);
+          page.setCropBox(x + left, y + bottom, cropWidth, cropHeight);
         }
 
-        const pdfBytes = await pdfDoc.save();
+        const croppedBytes = await pdfDoc.save();
+        const strippedBytes = await stripOutsideCropContent(croppedBytes);
+        const resultDoc = await loadPdfDocument(strippedBytes);
         return {
           type: 'pdf',
-          document: pdfDoc,
-          bytes: new Uint8Array(pdfBytes),
+          document: resultDoc,
+          bytes: strippedBytes,
           filename: input.filename.replace(/\.pdf$/i, '_cropped.pdf'),
         };
       }),

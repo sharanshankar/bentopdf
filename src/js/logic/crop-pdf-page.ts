@@ -7,6 +7,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument as PDFLibDocument } from 'pdf-lib';
 import { CropperState, CropPercentages } from '@/types';
 import { loadPdfDocument } from '../utils/load-pdf-document.js';
+import { stripOutsideCropContent } from '../utils/crop-pdf.js';
 import '../utils/setup-pdf-worker.js';
 
 import { trText, onPageReady } from '../i18n/i18n.js';
@@ -343,7 +344,9 @@ async function performMetadataCrop(
     page.setCropBox(minX, minY, maxX - minX, maxY - minY);
   }
 
-  return pdfToModify.save();
+  const croppedBytes = await pdfToModify.save();
+  const pageIndices = Object.keys(cropData).map((n) => Number(n) - 1);
+  return stripOutsideCropContent(croppedBytes, pageIndices);
 }
 
 async function performFlatteningCrop(
