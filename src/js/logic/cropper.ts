@@ -9,6 +9,7 @@ import Cropper from 'cropperjs';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument as PDFLibDocument } from 'pdf-lib';
 import { loadPdfDocument } from '../utils/load-pdf-document.js';
+import { stripOutsideCropContent } from '../utils/crop-pdf.js';
 
 // --- Global State for the Cropper Tool ---
 import type { CropPercentages } from '@/types';
@@ -375,7 +376,14 @@ export async function setupCropperTool() {
           cropperState.originalPdfBytes
         );
         await performMetadataCrop(pdfToModify, finalCropData);
-        finalPdfBytes = await pdfToModify.save();
+        const croppedBytes = await pdfToModify.save();
+        const pageIndices = Object.keys(finalCropData).map(
+          (n) => Number(n) - 1
+        );
+        finalPdfBytes = await stripOutsideCropContent(
+          croppedBytes,
+          pageIndices
+        );
       }
 
       const fileName = isDestructive

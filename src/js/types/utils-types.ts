@@ -74,6 +74,12 @@ export interface PyMuPDFRasterizeOptions {
   quality?: number;
 }
 
+export interface PyMuPDFSaveOptions {
+  garbage?: number;
+  deflate?: boolean;
+  clean?: boolean;
+}
+
 export interface PyMuPDFDocument {
   pageCount: number;
   pages: (() => PyMuPDFPage[]) & PyMuPDFPage[];
@@ -81,8 +87,17 @@ export interface PyMuPDFDocument {
   isEncrypted: boolean;
   authenticate(password: string): boolean;
   getPage(index: number): PyMuPDFPage;
-  save(): Uint8Array;
+  save(options?: PyMuPDFSaveOptions): Uint8Array;
   close(): void;
+  docVar?: string;
+  pyodide?: {
+    globals: {
+      set(key: string, value: unknown): void;
+      delete(key: string): void;
+    };
+    runPython(code: string): unknown;
+  };
+  runPython?(code: string): unknown;
   getLayerConfig?(): unknown[];
   addLayer?(name: string): { number: number; xref: number };
   setLayerConfig?(layers: unknown[]): void;
