@@ -50,7 +50,7 @@ function createTestDocument(
 ): PyMuPDFDocument {
   return {
     pageCount: py.runPython(`${docVar}.page_count`) as number,
-    pages: (() => []) as unknown as PyMuPDFDocument['pages'],
+    pages: ((): never[] => []) as unknown as PyMuPDFDocument['pages'],
     needsPass: false,
     isEncrypted: false,
     authenticate: () => true,
